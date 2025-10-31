@@ -660,4 +660,24 @@ export class DeviceAction {
     logger.silly(`putKVMRedirectionSettingData ${messages.COMPLETE}`)
     return result.Envelope.Body
   }
+
+  async setEthernetLinkPreference(
+    linkPreference: AMT.Types.EthernetPortSettings.LinkPreference,
+    timeoutSeconds: number
+  ): Promise<Common.Models.Envelope<any>> {
+    logger.silly(`setEthernetLinkPreference ${messages.REQUEST}`)
+    const xmlRequestBody = this.amt.EthernetPortSettings.SetLinkPreference(linkPreference, timeoutSeconds)
+    const result = await this.ciraHandler.Get(this.ciraSocket, xmlRequestBody)
+    logger.silly(`setEthernetLinkPreference ${messages.COMPLETE}`)
+    return result.Envelope
+  }
+
+  async setLinkPreferenceME(timeoutSeconds: number): Promise<Common.Models.Envelope<any>> {
+    return await this.setEthernetLinkPreference(1, timeoutSeconds)
+  }
+
+  async cancelLinkPreference(): Promise<Common.Models.Envelope<any>> {
+    // Set preference back to HOST; timeout 0 implies immediate reversion semantics
+    return await this.setEthernetLinkPreference(2, 0)
+  }
 }
