@@ -663,21 +663,22 @@ export class DeviceAction {
 
   async setEthernetLinkPreference(
     linkPreference: AMT.Types.EthernetPortSettings.LinkPreference,
-    timeoutSeconds: number
+    timeoutSeconds: number,
+    instanceID: string = 'Intel(r) AMT Ethernet Port Settings 0'
   ): Promise<Common.Models.Envelope<any>> {
     logger.silly(`setEthernetLinkPreference ${messages.REQUEST}`)
-    const xmlRequestBody = this.amt.EthernetPortSettings.SetLinkPreference(linkPreference, timeoutSeconds)
+    const xmlRequestBody = this.amt.EthernetPortSettings.SetLinkPreference(linkPreference, timeoutSeconds, instanceID)
     const result = await this.ciraHandler.Get(this.ciraSocket, xmlRequestBody)
     logger.silly(`setEthernetLinkPreference ${messages.COMPLETE}`)
     return result.Envelope
   }
 
-  async setLinkPreferenceME(timeoutSeconds: number): Promise<Common.Models.Envelope<any>> {
-    return await this.setEthernetLinkPreference(1, timeoutSeconds)
+  async setLinkPreferenceME(timeoutSeconds: number, instanceID?: string): Promise<Common.Models.Envelope<any>> {
+    return await this.setEthernetLinkPreference(1, timeoutSeconds, instanceID)
   }
 
-  async cancelLinkPreference(): Promise<Common.Models.Envelope<any>> {
+  async cancelLinkPreference(instanceID?: string): Promise<Common.Models.Envelope<any>> {
     // Set preference back to HOST; timeout 0 implies immediate reversion semantics
-    return await this.setEthernetLinkPreference(2, 0)
+    return await this.setEthernetLinkPreference(2, 0, instanceID)
   }
 }
