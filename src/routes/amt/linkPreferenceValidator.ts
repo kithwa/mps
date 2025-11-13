@@ -6,6 +6,7 @@
 import { check } from 'express-validator'
 
 export const linkPreferenceValidator = (): any => [
-  check('timeout').isInt({ min: 0 })
+  check('timeout').isInt({ min: 0 }),
+  check('instanceID').optional().isString()
 ]
 
