@@ -819,6 +819,13 @@ paths:
           required: true
           schema:
             type: string
+        - name: instanceID
+          in: query
+          description: InstanceID of the Ethernet port (e.g., "Intel(r) AMT Ethernet Port Settings 0")
+          required: false
+          schema:
+            type: string
+            default: Intel(r) AMT Ethernet Port Settings 0
       requestBody:
         description: Timeout setting in seconds
         required: true
@@ -831,6 +838,8 @@ paths:
                   type: integer
                   description: Timeout in seconds
                   example: 300
+              required:
+                - timeout
       responses:
         200:
           description: 'Link preference set'
@@ -856,6 +865,13 @@ paths:
         required: true
         schema:
           type: string
+      - name: instanceID
+        in: query
+        description: InstanceID of the Ethernet port (e.g., "Intel(r) AMT Ethernet Port Settings 0")
+        required: false
+        schema:
+          type: string
+          default: Intel(r) AMT Ethernet Port Settings 0
       responses:
         200:
           description: 'Link preference reverted'

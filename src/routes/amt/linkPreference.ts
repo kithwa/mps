@@ -13,7 +13,7 @@ export async function setLinkPreference(req: Request, res: Response): Promise<vo
   try {
     const guid: string = req.params.guid
     const timeout: number = Number(req.body.timeout)
-    const instanceID: string | undefined = req.body.instanceID
+    const instanceID: string | undefined = req.query.instanceID as string
     const deviceAction: DeviceAction = req.deviceAction as DeviceAction
 
     logger.debug(`Set Link Preference to ME for ${guid} with timeout ${timeout}s, instanceID: ${instanceID ?? 'default'}`)
