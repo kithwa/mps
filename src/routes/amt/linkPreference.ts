@@ -18,6 +18,8 @@ export async function setLinkPreference(req: Request, res: Response): Promise<vo
     const deviceAction: DeviceAction = req.deviceAction as DeviceAction
 
     const linkPrefName = linkPreference === 1 ? 'ME' : 'HOST'
+    // Note: timeout is only applicable when linkPreference is ME (1)
+    // When linkPreference is HOST (2), the timeout is automatically ignored in wsman-messages
     logger.debug(`Set Link Preference to ${linkPrefName} for ${guid} with timeout ${timeout}s, instanceID: ${instanceID ?? 'default'}`)
     await deviceAction.setEthernetLinkPreference(linkPreference as 1 | 2, timeout, instanceID)
     MqttProvider.publishEvent('success', ['AMT_LinkPreference'], `Link Preference set to ${linkPrefName}`)
