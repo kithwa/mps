@@ -694,6 +694,8 @@ export class DeviceAction {
     instanceID: string = 'Intel(r) AMT Ethernet Port Settings 0'
   ): Promise<Common.Models.Envelope<any>> {
     logger.silly(`setEthernetLinkPreference ${messages.REQUEST}`)
+    // Note: timeout is only applicable when linkPreference is ME (1)
+    // When linkPreference is HOST (2), timeout is automatically set to 0 in wsman-messages
     const xmlRequestBody = this.amt.EthernetPortSettings.SetLinkPreference(linkPreference, timeoutSeconds, instanceID)
     const result = await this.ciraHandler.Get(this.ciraSocket, xmlRequestBody)
     logger.silly(`setEthernetLinkPreference ${messages.COMPLETE}`)
@@ -705,7 +707,7 @@ export class DeviceAction {
   }
 
   async cancelLinkPreference(instanceID?: string): Promise<Common.Models.Envelope<any>> {
-    // Set preference back to HOST; timeout 0 implies immediate reversion semantics
+    // Set preference back to HOST (timeout is ignored for HOST preference)
     return await this.setEthernetLinkPreference(2, 0, instanceID)
   }
 }
