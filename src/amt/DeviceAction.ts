@@ -672,6 +672,22 @@ export class DeviceAction {
     return result.Envelope.Body
   }
 
+  async enumerateEthernetPortSettings(): Promise<
+    Common.Models.Envelope<Common.Models.Pull<AMT.Models.EthernetPortSettings>>
+  > {
+    logger.silly(`enumerateEthernetPortSettings ${messages.REQUEST}`)
+    let xmlRequestBody = this.amt.EthernetPortSettings.Enumerate()
+    const enumResponse = await this.ciraHandler.Enumerate(this.ciraSocket, xmlRequestBody)
+    if (enumResponse == null) {
+      logger.error(`enumerateEthernetPortSettings failed. Reason: ${messages.ENUMERATION_RESPONSE_NULL}`)
+      return null
+    }
+    xmlRequestBody = this.amt.EthernetPortSettings.Pull(enumResponse.Envelope.Body.EnumerateResponse.EnumerationContext)
+    const pullResponse = await this.ciraHandler.Pull<AMT.Models.EthernetPortSettings>(this.ciraSocket, xmlRequestBody)
+    logger.silly(`enumerateEthernetPortSettings ${messages.COMPLETE}`)
+    return pullResponse.Envelope
+  }
+
   async setEthernetLinkPreference(
     linkPreference: AMT.Types.EthernetPortSettings.LinkPreference,
     timeoutSeconds: number,
