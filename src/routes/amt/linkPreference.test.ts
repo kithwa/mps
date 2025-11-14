@@ -14,7 +14,7 @@ import { MqttProvider } from '../../utils/MqttProvider.js'
 import { setLinkPreference } from './linkPreference.js'
 
 describe('Link Preference', () => {
-  let req: Express.Request
+  let req
   let resSpy
   let mqttSpy: SpyInstance<any>
   let setEthernetLinkPreferenceSpy: SpyInstance<any>

@@ -14,7 +14,7 @@ import { MqttProvider } from '../../utils/MqttProvider.js'
 import { getEthernetPortSettings } from './getEthernetPortSettings.js'
 
 describe('Get Ethernet Port Settings', () => {
-  let req: Express.Request
+  let req
   let resSpy
   let mqttSpy: SpyInstance<any>
   let getEthernetPortSettingsSpy: SpyInstance<any>
@@ -26,22 +26,20 @@ describe('Get Ethernet Port Settings', () => {
     device = new DeviceAction(handler, null)
     
     mockEthernetPortSettings = {
-      Body: {
-        AMT_EthernetPortSettings: {
-          InstanceID: 'Intel(r) AMT Ethernet Port Settings 0',
-          ElementName: 'Intel(r) AMT Ethernet Port Settings',
-          MACAddress: 'a4-ae-11-1c-02-4d',
-          LinkIsUp: true,
-          LinkPolicy: [1, 14, 16],
-          LinkPreference: 2,
-          LinkControl: 2,
-          SharedMAC: true,
-          SharedStaticIp: false,
-          SharedDynamicIP: true,
-          IpSyncEnabled: true,
-          DHCPEnabled: true,
-          PhysicalConnectionType: 0
-        }
+      AMT_EthernetPortSettings: {
+        InstanceID: 'Intel(r) AMT Ethernet Port Settings 0',
+        ElementName: 'Intel(r) AMT Ethernet Port Settings',
+        MACAddress: 'a4-ae-11-1c-02-4d',
+        LinkIsUp: true,
+        LinkPolicy: [1, 14, 16],
+        LinkPreference: 2,
+        LinkControl: 2,
+        SharedMAC: true,
+        SharedStaticIp: false,
+        SharedDynamicIP: true,
+        IpSyncEnabled: true,
+        DHCPEnabled: true,
+        PhysicalConnectionType: 0
       }
     }
 
@@ -71,7 +69,7 @@ describe('Get Ethernet Port Settings', () => {
     expect(getEthernetPortSettingsSpy).toHaveBeenCalledWith(undefined)
     expect(mqttSpy).toHaveBeenCalledWith('success', ['AMT_EthernetPortSettings'], 'Ethernet Port Settings retrieved')
     expect(resSpy.status).toHaveBeenCalledWith(200)
-    expect(resSpy.json).toHaveBeenCalledWith(mockEthernetPortSettings.Body.AMT_EthernetPortSettings)
+    expect(resSpy.json).toHaveBeenCalledWith(mockEthernetPortSettings)
   })
 
   it('should get ethernet port settings with custom instanceID', async () => {
