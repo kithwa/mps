@@ -6,6 +6,7 @@
 import { check, query } from 'express-validator'
 
 export const linkPreferenceValidator = (): any => [
+  check('linkPreference').isInt({ min: 1, max: 2 }).withMessage('linkPreference must be 1 (ME) or 2 (HOST)'),
   check('timeout').isInt({ min: 0 }),
   query('instanceID').optional().isString()
 ]

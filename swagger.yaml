@@ -865,8 +865,8 @@ paths:
           description: 'Internal server error'
   /api/v1/amt/network/linkPreference/{guid}:
     post:
-      summary: Set link preference to ME with timeout
-      description: Set Ethernet Link Preference to ME for a duration.
+      summary: Set link preference with timeout
+      description: Set Ethernet Link Preference to ME (1) or HOST (2) for a specified duration.
       tags:
         - AMT
       parameters:
@@ -885,22 +885,47 @@ paths:
             type: string
             default: Intel(r) AMT Ethernet Port Settings 0
       requestBody:
-        description: Timeout setting in seconds
+        description: Link preference and timeout settings
         required: true
         content:
           application/json:
             schema:
               type: object
               properties:
+                linkPreference:
+                  type: integer
+                  description: Link preference - 1 = ME, 2 = HOST
+                  enum: [1, 2]
+                  example: 1
                 timeout:
                   type: integer
-                  description: Timeout in seconds
+                  description: Timeout in seconds (0 for immediate change without timeout)
                   example: 300
               required:
+                - linkPreference
                 - timeout
       responses:
         200:
-          description: 'Link preference set'
+          description: 'Link preference set successfully'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: Link Preference set to ME
+                  linkPreference:
+                    type: integer
+                    example: 1
+                  timeout:
+                    type: integer
+                    example: 300
+                  instanceID:
+                    type: string
+                    example: Intel(r) AMT Ethernet Port Settings 0
+        400:
+          description: 'Invalid parameters'
         404:
           description: 'Device not found'
           content:
@@ -909,38 +934,7 @@ paths:
                 $ref: '#/components/schemas/DisconnectErrorResponse'
         500:
           description: 'Internal server error'
-  /api/v1/amt/network/linkPreference/cancel/{guid}:
-    get:
-      summary: Cancel link preference and revert to HOST
-      description: Cancels temporary link preference and sets preference back to HOST.
-      tags:
-        - AMT
-      parameters:
-      - name: guid
-        in: path
-        description: GUID of device
-        example: 123e4567-e89b-12d3-a456-426614174000
-        required: true
-        schema:
-          type: string
-      - name: instanceID
-        in: query
-        description: InstanceID of the Ethernet port (e.g., "Intel(r) AMT Ethernet Port Settings 0")
-        required: false
-        schema:
-          type: string
-          default: Intel(r) AMT Ethernet Port Settings 0
-      responses:
-        200:
-          description: 'Link preference reverted'
-        404:
-          description: 'Device not found'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DisconnectErrorResponse'
-        500:
-          description: 'Internal server error'
+  /api/v1/amt/screen/{guid}:
     put:
       summary: Put the changed settings for KVM in AMT
       description: Modify screen settings for KVM in AMT device

@@ -38,7 +38,7 @@ import { validator } from './kvm/validator.js'
 import { get } from 'http'
 import { getScreenSettingData } from './kvm/get.js'
 import { setKVMRedirectionSettingData } from './kvm/set.js'
-import { setLinkPreference, cancelLinkPreference } from './linkPreference.js'
+import { setLinkPreference } from './linkPreference.js'
 import { linkPreferenceValidator } from './linkPreferenceValidator.js'
 import { getEthernetPortSettings } from './getEthernetPortSettings.js'
 import { enumerateEthernetPortSettings } from './enumerateEthernetPortSettings.js'
@@ -78,6 +78,5 @@ amtRouter.get('/network/ethernetPortSettings/enumerate/:guid', ciraMiddleware, e
 
 // Link Preference (ME/HOST)
 amtRouter.post('/network/linkPreference/:guid', linkPreferenceValidator(), validateMiddleware, ciraMiddleware, setLinkPreference)
-amtRouter.get('/network/linkPreference/cancel/:guid', ciraMiddleware, cancelLinkPreference)
 
 export default amtRouter
