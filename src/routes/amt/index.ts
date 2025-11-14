@@ -41,6 +41,7 @@ import { setKVMRedirectionSettingData } from './kvm/set.js'
 import { setLinkPreference, cancelLinkPreference } from './linkPreference.js'
 import { linkPreferenceValidator } from './linkPreferenceValidator.js'
 import { getEthernetPortSettings } from './getEthernetPortSettings.js'
+import { enumerateEthernetPortSettings } from './enumerateEthernetPortSettings.js'
 
 const amtRouter: Router = Router()
 
@@ -73,6 +74,7 @@ amtRouter.put('/kvm/displays/:guid', validator(), ciraMiddleware, setKVMRedirect
 
 // Ethernet Port Settings
 amtRouter.get('/network/ethernetPortSettings/:guid', ciraMiddleware, getEthernetPortSettings)
+amtRouter.get('/network/ethernetPortSettings/enumerate/:guid', ciraMiddleware, enumerateEthernetPortSettings)
 
 // Link Preference (ME/HOST)
 amtRouter.post('/network/linkPreference/:guid', linkPreferenceValidator(), validateMiddleware, ciraMiddleware, setLinkPreference)
