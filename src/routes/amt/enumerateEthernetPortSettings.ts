@@ -16,8 +16,14 @@ export async function enumerateEthernetPortSettings(req: Request, res: Response)
 
     logger.debug(`Enumerate Ethernet Port Settings for ${guid}`)
     const result = await deviceAction.enumerateEthernetPortSettings()
+    
+    // Extract the AMT_EthernetPortSettings from the response
+    const settings = (result?.Body?.PullResponse?.Items as any)?.AMT_EthernetPortSettings
+    // Ensure settings is always an array
+    const settingsArray = Array.isArray(settings) ? settings : (settings ? [settings] : [])
+    
     MqttProvider.publishEvent('success', ['AMT_EthernetPortSettings'], 'Ethernet Port Settings enumerated')
-    res.status(200).json(result).end()
+    res.status(200).json(settingsArray).end()
   } catch (error) {
     logger.error(`Exception during Enumerate Ethernet Port Settings: ${error}`)
     MqttProvider.publishEvent('fail', ['AMT_EthernetPortSettings'], messages.INTERNAL_SERVICE_ERROR)
