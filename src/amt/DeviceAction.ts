@@ -661,6 +661,17 @@ export class DeviceAction {
     return result.Envelope.Body
   }
 
+  async getEthernetPortSettings(
+    instanceID: string = 'Intel(r) AMT Ethernet Port Settings 0'
+  ): Promise<AMT.Models.EthernetPortSettings> {
+    logger.silly(`getEthernetPortSettings ${messages.REQUEST}`)
+    const selector = { name: 'InstanceID', value: instanceID }
+    const xmlRequestBody = this.amt.EthernetPortSettings.Get(selector)
+    const result = await this.ciraHandler.Get<AMT.Models.EthernetPortSettings>(this.ciraSocket, xmlRequestBody)
+    logger.silly(`getEthernetPortSettings ${messages.COMPLETE}`)
+    return result.Envelope.Body
+  }
+
   async setEthernetLinkPreference(
     linkPreference: AMT.Types.EthernetPortSettings.LinkPreference,
     timeoutSeconds: number,
