@@ -866,11 +866,7 @@ paths:
   /api/v1/amt/network/linkPreference/{guid}:
     post:
       summary: Set link preference with timeout
-      description: |
-        Set Ethernet Link Preference to ME (1) or HOST (2) for a specified duration. 
-        
-        **Important**: The timeout parameter is only applicable when linkPreference is set to ME (1). 
-        When linkPreference is set to HOST (2), the timeout value is automatically ignored and set to 0 internally.
+      description: Set Ethernet Link Preference to ME (1) for a specified duration, or to HOST (2).
       tags:
         - AMT
       parameters:
@@ -903,7 +899,7 @@ paths:
                   example: 1
                 timeout:
                   type: integer
-                  description: Timeout in seconds. Only applicable when linkPreference=1 (ME). Automatically ignored when linkPreference=2 (HOST).
+                  description: Timeout in seconds
                   example: 300
               required:
                 - linkPreference
