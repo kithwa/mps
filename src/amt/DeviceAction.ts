@@ -721,7 +721,8 @@ export class DeviceAction {
 
       const connectionType = parseInt(targetPort.PhysicalConnectionType, 10)
       // PhysicalConnectionType: 0=Integrated LAN, 1=Discrete LAN, 2=Thunderbolt, 3=Wireless LAN
-      const isWiFi = connectionType === 2 || connectionType === 3
+      // PhysicalConnectionType 3 (Wireless LAN) is WiFi
+      const isWiFi = connectionType === 3
       logger.silly(`validateWiFiPort: ${instanceID} connectionType=${connectionType} isWiFi=${isWiFi}`)
       return { isWiFi, connectionType, instanceID }
     } catch (err) {
@@ -745,7 +746,7 @@ export class DeviceAction {
     }
 
     if (!validation.isWiFi) {
-      const errorMsg = `SetLinkPreference is only applicable for WiFi ports. InstanceID "${instanceID}" has PhysicalConnectionType=${validation.connectionType} (0=Integrated LAN, 1=Discrete LAN). WiFi ports have type 2 (Thunderbolt) or 3 (Wireless LAN).`
+      const errorMsg = `SetLinkPreference is only applicable for WiFi ports. InstanceID "${instanceID}" has PhysicalConnectionType=${validation.connectionType} (0=Integrated LAN, 1=Discrete LAN, 2=Thunderbolt). WiFi ports have type 3 (Wireless LAN).`
       logger.error(`setEthernetLinkPreference: ${errorMsg}`)
       // Return an error envelope structure that handlers can recognize
       return {

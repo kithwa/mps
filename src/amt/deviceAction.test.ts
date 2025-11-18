@@ -689,7 +689,7 @@ describe('Device Action Tests', () => {
       expect(result?.connectionType).toBe(0)
     })
 
-    it('should identify Thunderbolt as WiFi (PhysicalConnectionType=2)', async () => {
+    it('should identify Thunderbolt as non-WiFi (PhysicalConnectionType=2)', async () => {
       const mockEnumResponse = {
         Body: {
           PullResponse: {
@@ -707,7 +707,7 @@ describe('Device Action Tests', () => {
 
       const result = await device.validateWiFiPort('Intel(r) AMT Ethernet Port Settings 2')
 
-      expect(result?.isWiFi).toBe(true)
+      expect(result?.isWiFi).toBe(false)
       expect(result?.connectionType).toBe(2)
     })
 
