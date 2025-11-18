@@ -137,4 +137,35 @@ describe('Link Preference', () => {
     expect(resSpy.status).toHaveBeenCalledWith(500)
     expect(resSpy.json).toHaveBeenCalledWith(ErrorResponse(500, 'Exception during Set Link Preference'))
   })
+
+  it('should return 400 when attempting to set link preference on non-WiFi port', async () => {
+    // Mock a validation failure response - the exact message depends on actual port type
+    const mockFaultResponse = {
+      Header: {},
+      Body: {
+        Fault: {
+          Code: { Value: 'ValidationError' },
+          Reason: { Text: 'SetLinkPreference is only applicable for WiFi ports' }
+        }
+      }
+    }
+    setEthernetLinkPreferenceSpy.mockResolvedValue(mockFaultResponse)
+
+    await setLinkPreference(req as any, resSpy)
+
+    // Verify 400 response with the fault message
+    expect(resSpy.status).toHaveBeenCalledWith(400)
+    expect(resSpy.json).toHaveBeenCalledWith({ error: mockFaultResponse.Body.Fault.Reason.Text })
+    expect(mqttSpy).toHaveBeenCalledWith('fail', ['AMT_LinkPreference'], mockFaultResponse.Body.Fault.Reason.Text)
+  })
+
+  it('should return 500 when port validation returns null', async () => {
+    setEthernetLinkPreferenceSpy.mockResolvedValue(null)
+
+    await setLinkPreference(req as any, resSpy)
+
+    expect(mqttSpy).toHaveBeenCalledWith('fail', ['AMT_LinkPreference'], 'Port validation failed')
+    expect(resSpy.status).toHaveBeenCalledWith(500)
+    expect(resSpy.json).toHaveBeenCalledWith(ErrorResponse(500, 'Failed to validate ethernet port'))
+  })
 })
