@@ -56,7 +56,7 @@ describe('Link Preference', () => {
 
     await setLinkPreference(req as any, resSpy)
 
-    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(1, 300, undefined)
+    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(1, 300)
     expect(mqttSpy).toHaveBeenCalledWith('success', ['AMT_LinkPreference'], 'Link Preference set to ME')
     expect(resSpy.status).toHaveBeenCalledWith(200)
     expect(resSpy.json).toHaveBeenCalledWith({
@@ -73,7 +73,7 @@ describe('Link Preference', () => {
 
     await setLinkPreference(req as any, resSpy)
 
-    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(2, 600, undefined)
+    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(2, 600)
     expect(mqttSpy).toHaveBeenCalledWith('success', ['AMT_LinkPreference'], 'Link Preference set to HOST')
     expect(resSpy.status).toHaveBeenCalledWith(200)
     expect(resSpy.json).toHaveBeenCalledWith({
@@ -84,34 +84,13 @@ describe('Link Preference', () => {
     })
   })
 
-  it('should set link preference with custom instanceID', async () => {
-    req.body.linkPreference = 1
-    req.body.timeout = 120
-    req.query.instanceID = 'Intel(r) AMT Ethernet Port Settings 1'
-    
-    // Mock response with the custom instanceID
-    setEthernetLinkPreferenceSpy.mockResolvedValue({
-      _detectedInstanceID: 'Intel(r) AMT Ethernet Port Settings 1'
-    } as any)
-
-    await setLinkPreference(req as any, resSpy)
-
-    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(1, 120, 'Intel(r) AMT Ethernet Port Settings 1')
-    expect(resSpy.json).toHaveBeenCalledWith({
-      status: 'Link Preference set to ME',
-      linkPreference: 1,
-      timeout: 120,
-      instanceID: 'Intel(r) AMT Ethernet Port Settings 1'
-    })
-  })
-
   it('should set link preference to ME with timeout 0', async () => {
     req.body.linkPreference = 1
     req.body.timeout = 0
 
     await setLinkPreference(req as any, resSpy)
 
-    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(1, 0, undefined)
+    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(1, 0)
     expect(resSpy.json).toHaveBeenCalledWith({
       status: 'Link Preference set to ME',
       linkPreference: 1,
@@ -126,7 +105,7 @@ describe('Link Preference', () => {
 
     await setLinkPreference(req as any, resSpy)
 
-    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(2, 0, undefined)
+    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(2, 0)
     expect(resSpy.json).toHaveBeenCalledWith({
       status: 'Link Preference set to HOST',
       linkPreference: 2,
@@ -172,9 +151,9 @@ describe('Link Preference', () => {
 
     await setLinkPreference(req as any, resSpy)
 
-    expect(mqttSpy).toHaveBeenCalledWith('fail', ['AMT_LinkPreference'], 'Port validation failed')
+    expect(mqttSpy).toHaveBeenCalledWith('fail', ['AMT_LinkPreference'], 'Unexpected error')
     expect(resSpy.status).toHaveBeenCalledWith(500)
-    expect(resSpy.json).toHaveBeenCalledWith(ErrorResponse(500, 'Failed to validate ethernet port'))
+    expect(resSpy.json).toHaveBeenCalledWith(ErrorResponse(500, 'Failed to set link preference'))
   })
 
   it('should auto-detect WiFi port when instanceID not provided', async () => {
@@ -187,7 +166,7 @@ describe('Link Preference', () => {
 
     await setLinkPreference(req as any, resSpy)
 
-    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(1, 300, undefined)
+    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(1, 300)
     expect(resSpy.status).toHaveBeenCalledWith(200)
     expect(resSpy.json).toHaveBeenCalledWith({
       status: 'Link Preference set to ME',

@@ -661,30 +661,19 @@ export class DeviceAction {
     return result.Envelope.Body
   }
 
-  async getEthernetPortSettings(
-    instanceID: string = 'Intel(r) AMT Ethernet Port Settings 0'
-  ): Promise<AMT.Models.EthernetPortSettings> {
-    logger.silly(`getEthernetPortSettings ${messages.REQUEST}`)
-    const selector = { name: 'InstanceID', value: instanceID }
-    const xmlRequestBody = this.amt.EthernetPortSettings.Get(selector)
-    const result = await this.ciraHandler.Get<AMT.Models.EthernetPortSettings>(this.ciraSocket, xmlRequestBody)
-    logger.silly(`getEthernetPortSettings ${messages.COMPLETE}`)
-    return result.Envelope.Body
-  }
-
-  async enumerateEthernetPortSettings(): Promise<
+  async getEthernetPortSettings(): Promise<
     Common.Models.Envelope<Common.Models.Pull<AMT.Models.EthernetPortSettings>>
   > {
-    logger.silly(`enumerateEthernetPortSettings ${messages.REQUEST}`)
+    logger.silly(`getEthernetPortSettings ${messages.REQUEST}`)
     let xmlRequestBody = this.amt.EthernetPortSettings.Enumerate()
     const enumResponse = await this.ciraHandler.Enumerate(this.ciraSocket, xmlRequestBody)
     if (enumResponse == null) {
-      logger.error(`enumerateEthernetPortSettings failed. Reason: ${messages.ENUMERATION_RESPONSE_NULL}`)
+      logger.error(`getEthernetPortSettings failed. Reason: ${messages.ENUMERATION_RESPONSE_NULL}`)
       return null
     }
     xmlRequestBody = this.amt.EthernetPortSettings.Pull(enumResponse.Envelope.Body.EnumerateResponse.EnumerationContext)
     const pullResponse = await this.ciraHandler.Pull<AMT.Models.EthernetPortSettings>(this.ciraSocket, xmlRequestBody)
-    logger.silly(`enumerateEthernetPortSettings ${messages.COMPLETE}`)
+    logger.silly(`getEthernetPortSettings ${messages.COMPLETE}`)
     return pullResponse.Envelope
   }
 
@@ -695,7 +684,7 @@ export class DeviceAction {
   async findWiFiPort(): Promise<string | null> {
     logger.silly('findWiFiPort: searching for WiFi port')
     try {
-      const enumResult = await this.enumerateEthernetPortSettings()
+      const enumResult = await this.getEthernetPortSettings()
       if (enumResult?.Body?.PullResponse?.Items == null) {
         logger.error('findWiFiPort: No ethernet port settings found')
         return null
@@ -728,98 +717,29 @@ export class DeviceAction {
     }
   }
 
-  /**
-   * Validates if a given instance is a WiFi port by checking PhysicalConnectionType
-   * @returns Object with isWiFi boolean and connectionType number, or null if not found
-   */
-  async validateWiFiPort(instanceID: string): Promise<{ isWiFi: boolean; connectionType: number; instanceID: string } | null> {
-    logger.silly(`validateWiFiPort for ${instanceID}`)
-    try {
-      // Enumerate all ethernet port settings
-      const enumResult = await this.enumerateEthernetPortSettings()
-      if (enumResult?.Body?.PullResponse?.Items == null) {
-        logger.error('validateWiFiPort: No ethernet port settings found')
-        return null
-      }
-
-      // Extract AMT_EthernetPortSettings from Items
-      const settings: any = (enumResult.Body.PullResponse.Items as any).AMT_EthernetPortSettings
-      if (settings == null) {
-        logger.error('validateWiFiPort: AMT_EthernetPortSettings not found in response')
-        return null
-      }
-
-      // Ensure ports is always an array
-      const ports = Array.isArray(settings) ? settings : [settings]
-
-      // Find the port matching the instanceID
-      const targetPort = ports.find((port: any) => port.InstanceID === instanceID)
-      if (targetPort == null) {
-        logger.error(`validateWiFiPort: InstanceID ${instanceID} not found`)
-        return null
-      }
-
-      const connectionType = parseInt(targetPort.PhysicalConnectionType, 10)
-      // PhysicalConnectionType: 0=Integrated LAN, 1=Discrete LAN, 2=Thunderbolt, 3=Wireless LAN
-      // PhysicalConnectionType 3 (Wireless LAN) is WiFi
-      const isWiFi = connectionType === 3
-      logger.silly(`validateWiFiPort: ${instanceID} connectionType=${connectionType} isWiFi=${isWiFi}`)
-      return { isWiFi, connectionType, instanceID }
-    } catch (err) {
-      logger.error(`validateWiFiPort error: ${(err as Error).message}`)
-      return null
-    }
-  }
-
   async setEthernetLinkPreference(
     linkPreference: AMT.Types.EthernetPortSettings.LinkPreference,
-    timeoutSeconds: number,
-    instanceID?: string
+    timeoutSeconds: number
   ): Promise<Common.Models.Envelope<any>> {
     logger.silly(`setEthernetLinkPreference ${messages.REQUEST}`)
 
-    // If no instanceID provided, auto-detect the WiFi port
-    let targetInstanceID = instanceID
-    if (targetInstanceID == null || targetInstanceID.trim() === '') {
-      logger.silly('setEthernetLinkPreference: No instanceID provided, auto-detecting WiFi port')
-      targetInstanceID = await this.findWiFiPort()
-      if (targetInstanceID == null) {
-        const errorMsg = 'No WiFi port found on this device. SetLinkPreference requires a WiFi interface (PhysicalConnectionType=3).'
-        logger.error(`setEthernetLinkPreference: ${errorMsg}`)
-        return {
-          Header: {},
-          Body: {
-            Fault: {
-              Code: { Value: 'NoWiFiPort' },
-              Reason: { Text: errorMsg }
-            }
-          }
-        } as any
-      }
-      logger.info(`setEthernetLinkPreference: Auto-detected WiFi port: ${targetInstanceID}`)
-    }
-
-    // Validate that the target instance is a WiFi port
-    const validation = await this.validateWiFiPort(targetInstanceID)
-    if (validation == null) {
-      logger.error('setEthernetLinkPreference: Failed to validate port')
-      return null
-    }
-
-    if (!validation.isWiFi) {
-      const errorMsg = `SetLinkPreference is only applicable for WiFi ports. InstanceID "${targetInstanceID}" has PhysicalConnectionType=${validation.connectionType} (0=Integrated LAN, 1=Discrete LAN, 2=Thunderbolt). WiFi ports have type 3 (Wireless LAN).`
+    // Auto-detect the WiFi port
+    logger.silly('setEthernetLinkPreference: Auto-detecting WiFi port')
+    const targetInstanceID = await this.findWiFiPort()
+    if (targetInstanceID == null) {
+      const errorMsg = 'No WiFi port found on this device. SetLinkPreference requires a WiFi interface (PhysicalConnectionType=3).'
       logger.error(`setEthernetLinkPreference: ${errorMsg}`)
-      // Return an error envelope structure that handlers can recognize
       return {
         Header: {},
         Body: {
           Fault: {
-            Code: { Value: 'ValidationError' },
+            Code: { Value: 'NoWiFiPort' },
             Reason: { Text: errorMsg }
           }
         }
       } as any
     }
+    logger.info(`setEthernetLinkPreference: Auto-detected WiFi port: ${targetInstanceID}`)
 
     const xmlRequestBody = this.amt.EthernetPortSettings.SetLinkPreference(linkPreference, timeoutSeconds, targetInstanceID)
     const result = await this.ciraHandler.Get(this.ciraSocket, xmlRequestBody)
@@ -829,14 +749,5 @@ export class DeviceAction {
       (result.Envelope as any)._detectedInstanceID = targetInstanceID
     }
     return result.Envelope
-  }
-
-  async setLinkPreferenceME(timeoutSeconds: number, instanceID?: string): Promise<Common.Models.Envelope<any>> {
-    return await this.setEthernetLinkPreference(1, timeoutSeconds, instanceID)
-  }
-
-  async cancelLinkPreference(instanceID?: string): Promise<Common.Models.Envelope<any>> {
-    // Set preference back to HOST with timeout 0
-    return await this.setEthernetLinkPreference(2, 0, instanceID)
   }
 }
