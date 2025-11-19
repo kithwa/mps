@@ -38,15 +38,17 @@ export async function setLinkPreference(req: Request, res: Response): Promise<vo
       return
     }
 
-    // Extract the detected instanceID
+    // Extract the detected instanceID and WiFi port settings
     const detectedInstanceID = (result as any)._detectedInstanceID ?? 'Unknown'
+    const wifiPortSettings = (result as any)._wifiPortSettings
 
     MqttProvider.publishEvent('success', ['AMT_LinkPreference'], `Link Preference set to ${linkPrefName}`)
     res.status(200).json({ 
       status: `Link Preference set to ${linkPrefName}`, 
       linkPreference,
       timeout, 
-      instanceID: detectedInstanceID
+      instanceID: detectedInstanceID,
+      wifiPort: wifiPortSettings
     }).end()
   } catch (error) {
     logger.error(`Exception during Set Link Preference: ${error}`)

@@ -957,8 +957,28 @@ paths:
                     example: 300
                   instanceID:
                     type: string
-                    description: The WiFi port InstanceID that was used (auto-detected or specified)
+                    description: The WiFi port InstanceID that was auto-detected
                     example: Intel(r) AMT Ethernet Port Settings 1
+                  wifiPort:
+                    type: object
+                    description: Full AMT_EthernetPortSettings information for the WiFi port
+                    properties:
+                      InstanceID:
+                        type: string
+                        example: Intel(r) AMT Ethernet Port Settings 1
+                      ElementName:
+                        type: string
+                        example: Intel(r) WiFi Link
+                      PhysicalConnectionType:
+                        type: string
+                        description: 'Connection type: 0=Integrated LAN, 1=Discrete LAN, 2=Thunderbolt, 3=Wireless LAN (WiFi)'
+                        example: "3"
+                      MACAddress:
+                        type: string
+                        example: "AA:BB:CC:DD:EE:FF"
+                      LinkIsUp:
+                        type: boolean
+                        example: true
         400:
           description: 'Validation error - port is not a WiFi port or no WiFi port found'
           content:

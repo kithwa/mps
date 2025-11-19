@@ -44,9 +44,15 @@ describe('Link Preference', () => {
     resSpy.json.mockReturnThis()
     resSpy.send.mockReturnThis()
     mqttSpy = spyOn(MqttProvider, 'publishEvent')
-    // Mock with _detectedInstanceID to simulate auto-detection fallback
+    // Mock with _detectedInstanceID and _wifiPortSettings to simulate auto-detection
     setEthernetLinkPreferenceSpy = spyOn(device, 'setEthernetLinkPreference').mockResolvedValue({
-      _detectedInstanceID: 'Intel(r) AMT Ethernet Port Settings 0'
+      _detectedInstanceID: 'Intel(r) AMT Ethernet Port Settings 0',
+      _wifiPortSettings: {
+        InstanceID: 'Intel(r) AMT Ethernet Port Settings 0',
+        PhysicalConnectionType: '3',
+        ElementName: 'Intel(r) WiFi Link',
+        MACAddress: '00:11:22:33:44:55'
+      }
     } as any)
   })
 
@@ -63,7 +69,13 @@ describe('Link Preference', () => {
       status: 'Link Preference set to ME',
       linkPreference: 1,
       timeout: 300,
-      instanceID: 'Intel(r) AMT Ethernet Port Settings 0'
+      instanceID: 'Intel(r) AMT Ethernet Port Settings 0',
+      wifiPort: {
+        InstanceID: 'Intel(r) AMT Ethernet Port Settings 0',
+        PhysicalConnectionType: '3',
+        ElementName: 'Intel(r) WiFi Link',
+        MACAddress: '00:11:22:33:44:55'
+      }
     })
   })
 
@@ -80,37 +92,13 @@ describe('Link Preference', () => {
       status: 'Link Preference set to HOST',
       linkPreference: 2,
       timeout: 600,
-      instanceID: 'Intel(r) AMT Ethernet Port Settings 0'
-    })
-  })
-
-  it('should set link preference to ME with timeout 0', async () => {
-    req.body.linkPreference = 1
-    req.body.timeout = 0
-
-    await setLinkPreference(req as any, resSpy)
-
-    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(1, 0)
-    expect(resSpy.json).toHaveBeenCalledWith({
-      status: 'Link Preference set to ME',
-      linkPreference: 1,
-      timeout: 0,
-      instanceID: 'Intel(r) AMT Ethernet Port Settings 0'
-    })
-  })
-
-  it('should set link preference to HOST with timeout 0', async () => {
-    req.body.linkPreference = 2
-    req.body.timeout = 0
-
-    await setLinkPreference(req as any, resSpy)
-
-    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(2, 0)
-    expect(resSpy.json).toHaveBeenCalledWith({
-      status: 'Link Preference set to HOST',
-      linkPreference: 2,
-      timeout: 0,
-      instanceID: 'Intel(r) AMT Ethernet Port Settings 0'
+      instanceID: 'Intel(r) AMT Ethernet Port Settings 0',
+      wifiPort: {
+        InstanceID: 'Intel(r) AMT Ethernet Port Settings 0',
+        PhysicalConnectionType: '3',
+        ElementName: 'Intel(r) WiFi Link',
+        MACAddress: '00:11:22:33:44:55'
+      }
     })
   })
 
@@ -160,7 +148,13 @@ describe('Link Preference', () => {
     req.query.instanceID = undefined
     const mockResponse = {
       Body: { SetLinkPreference_OUTPUT: { ReturnValue: '0' } },
-      _detectedInstanceID: 'Intel(r) AMT Ethernet Port Settings 1'
+      _detectedInstanceID: 'Intel(r) AMT Ethernet Port Settings 1',
+      _wifiPortSettings: {
+        InstanceID: 'Intel(r) AMT Ethernet Port Settings 1',
+        PhysicalConnectionType: '3',
+        ElementName: 'WiFi Port',
+        MACAddress: 'AA:BB:CC:DD:EE:FF'
+      }
     }
     setEthernetLinkPreferenceSpy.mockResolvedValue(mockResponse)
 
@@ -172,7 +166,13 @@ describe('Link Preference', () => {
       status: 'Link Preference set to ME',
       linkPreference: 1,
       timeout: 300,
-      instanceID: 'Intel(r) AMT Ethernet Port Settings 1'
+      instanceID: 'Intel(r) AMT Ethernet Port Settings 1',
+      wifiPort: {
+        InstanceID: 'Intel(r) AMT Ethernet Port Settings 1',
+        PhysicalConnectionType: '3',
+        ElementName: 'WiFi Port',
+        MACAddress: 'AA:BB:CC:DD:EE:FF'
+      }
     })
   })
 

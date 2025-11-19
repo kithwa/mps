@@ -660,7 +660,11 @@ describe('Device Action Tests', () => {
 
       const result = await device.findWiFiPort()
 
-      expect(result).toBe('Intel(r) AMT Ethernet Port Settings 1')
+      expect(result).not.toBeNull()
+      expect(result?.instanceID).toBe('Intel(r) AMT Ethernet Port Settings 1')
+      expect(result?.settings.InstanceID).toBe('Intel(r) AMT Ethernet Port Settings 1')
+      expect(result?.settings.PhysicalConnectionType).toBe('3')
+      expect(result?.settings.ElementName).toBe('WiFi Port')
     })
 
     it('should return null when no WiFi port exists', async () => {
@@ -769,6 +773,9 @@ describe('Device Action Tests', () => {
       expect(result?.Body?.Fault).toBeUndefined()
       expect(getSpy).toHaveBeenCalled()
       expect((result as any)?._detectedInstanceID).toBe('Intel(r) AMT Ethernet Port Settings 1')
+      expect((result as any)?._wifiPortSettings).toBeDefined()
+      expect((result as any)?._wifiPortSettings.InstanceID).toBe('Intel(r) AMT Ethernet Port Settings 1')
+      expect((result as any)?._wifiPortSettings.PhysicalConnectionType).toBe('3')
     })
   })
 })

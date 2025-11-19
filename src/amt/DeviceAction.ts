@@ -679,9 +679,9 @@ export class DeviceAction {
 
   /**
    * Finds the first WiFi port by checking PhysicalConnectionType
-   * @returns InstanceID of the first WiFi port found, or null if none found
+   * @returns Object with instanceID and full port settings, or null if none found
    */
-  async findWiFiPort(): Promise<string | null> {
+  async findWiFiPort(): Promise<{ instanceID: string; settings: any } | null> {
     logger.silly('findWiFiPort: searching for WiFi port')
     try {
       const enumResult = await this.getEthernetPortSettings()
@@ -710,7 +710,10 @@ export class DeviceAction {
       }
 
       logger.silly(`findWiFiPort: Found WiFi port ${wifiPort.InstanceID}`)
-      return wifiPort.InstanceID
+      return {
+        instanceID: wifiPort.InstanceID,
+        settings: wifiPort
+      }
     } catch (err) {
       logger.error(`findWiFiPort error: ${(err as Error).message}`)
       return null
@@ -725,8 +728,8 @@ export class DeviceAction {
 
     // Auto-detect the WiFi port
     logger.silly('setEthernetLinkPreference: Auto-detecting WiFi port')
-    const targetInstanceID = await this.findWiFiPort()
-    if (targetInstanceID == null) {
+    const wifiPortInfo = await this.findWiFiPort()
+    if (wifiPortInfo == null) {
       const errorMsg = 'No WiFi port found on this device. SetLinkPreference requires a WiFi interface (PhysicalConnectionType=3).'
       logger.error(`setEthernetLinkPreference: ${errorMsg}`)
       return {
@@ -739,14 +742,15 @@ export class DeviceAction {
         }
       } as any
     }
-    logger.info(`setEthernetLinkPreference: Auto-detected WiFi port: ${targetInstanceID}`)
+    logger.info(`setEthernetLinkPreference: Auto-detected WiFi port: ${wifiPortInfo.instanceID}`)
 
-    const xmlRequestBody = this.amt.EthernetPortSettings.SetLinkPreference(linkPreference, timeoutSeconds, targetInstanceID)
+    const xmlRequestBody = this.amt.EthernetPortSettings.SetLinkPreference(linkPreference, timeoutSeconds, wifiPortInfo.instanceID)
     const result = await this.ciraHandler.Get(this.ciraSocket, xmlRequestBody)
     logger.silly(`setEthernetLinkPreference ${messages.COMPLETE}`)
-    // Add the detected instanceID to the result for the handler to use
+    // Add the detected instanceID and WiFi port settings to the result for the handler to use
     if (result?.Envelope != null) {
-      (result.Envelope as any)._detectedInstanceID = targetInstanceID
+      (result.Envelope as any)._detectedInstanceID = wifiPortInfo.instanceID;
+      (result.Envelope as any)._wifiPortSettings = wifiPortInfo.settings
     }
     return result.Envelope
   }
