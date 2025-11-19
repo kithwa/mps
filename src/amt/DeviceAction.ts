@@ -746,11 +746,16 @@ export class DeviceAction {
 
     const xmlRequestBody = this.amt.EthernetPortSettings.SetLinkPreference(linkPreference, timeoutSeconds, wifiPortInfo.instanceID)
     const result = await this.ciraHandler.Get(this.ciraSocket, xmlRequestBody)
+    
+    // Fetch the updated WiFi port settings after the operation
+    logger.silly('setEthernetLinkPreference: Fetching updated WiFi port settings')
+    const updatedWifiPortInfo = await this.findWiFiPort()
+    
     logger.silly(`setEthernetLinkPreference ${messages.COMPLETE}`)
-    // Add the detected instanceID and WiFi port settings to the result for the handler to use
+    // Add the detected instanceID and updated WiFi port settings to the result for the handler to use
     if (result?.Envelope != null) {
       (result.Envelope as any)._detectedInstanceID = wifiPortInfo.instanceID;
-      (result.Envelope as any)._wifiPortSettings = wifiPortInfo.settings
+      (result.Envelope as any)._wifiPortSettings = updatedWifiPortInfo?.settings ?? wifiPortInfo.settings
     }
     return result.Envelope
   }
