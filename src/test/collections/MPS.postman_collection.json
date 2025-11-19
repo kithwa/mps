@@ -2695,7 +2695,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"username\":\"standalone\",\r\n    \"password\":\"G@ppm0ym\"\r\n}",
+              "raw": "{\r\n    \"username\":\"admin\",\r\n    \"password\":\"P@ssw0rd\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2703,12 +2703,14 @@
               }
             },
             "url": {
-              "raw": "{{protocol}}://{{host}}/api/v1/authorize",
+              "raw": "{{protocol}}://{{host}}/mps/login/api/v1/authorize",
               "protocol": "{{protocol}}",
               "host": [
                 "{{host}}"
               ],
               "path": [
+                "mps",
+                "login",
                 "api",
                 "v1",
                 "authorize"
@@ -2995,12 +2997,13 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{protocol}}://{{host}}/api/v1/amt/network/ethernetPortSettings/enumerate/test-guid-123",
+          "raw": "{{protocol}}://{{host}}/mps/api/v1/amt/network/ethernetPortSettings/enumerate/test-guid-123",
           "protocol": "{{protocol}}",
           "host": [
             "{{host}}"
           ],
           "path": [
+            "mps",
             "api",
             "v1",
             "amt",
@@ -3048,12 +3051,13 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{protocol}}://{{host}}/api/v1/amt/network/ethernetPortSettings/test-guid-123?instanceID=Intel(r) AMT Ethernet Port Settings 0",
+          "raw": "{{protocol}}://{{host}}/mps/api/v1/amt/network/ethernetPortSettings/test-guid-123?instanceID=Intel(r) AMT Ethernet Port Settings 0",
           "protocol": "{{protocol}}",
           "host": [
             "{{host}}"
           ],
           "path": [
+            "mps",
             "api",
             "v1",
             "amt",
@@ -3115,12 +3119,13 @@
           "raw": "{\n  \"linkPreference\": 1,\n  \"timeout\": 300\n}"
         },
         "url": {
-          "raw": "{{protocol}}://{{host}}/api/v1/amt/network/linkPreference/test-guid-123",
+          "raw": "{{protocol}}://{{host}}/mps/api/v1/amt/network/linkPreference/test-guid-123",
           "protocol": "{{protocol}}",
           "host": [
             "{{host}}"
           ],
           "path": [
+            "mps",
             "api",
             "v1",
             "amt",
@@ -3176,12 +3181,13 @@
           "raw": "{\n  \"linkPreference\": 2,\n  \"timeout\": 0\n}"
         },
         "url": {
-          "raw": "{{protocol}}://{{host}}/api/v1/amt/network/linkPreference/test-guid-123?instanceID=Intel(r) AMT Ethernet Port Settings 1",
+          "raw": "{{protocol}}://{{host}}/mps/api/v1/amt/network/linkPreference/test-guid-123?instanceID=Intel(r) AMT Ethernet Port Settings 1",
           "protocol": "{{protocol}}",
           "host": [
             "{{host}}"
           ],
           "path": [
+            "mps",
             "api",
             "v1",
             "amt",
