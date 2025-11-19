@@ -44,7 +44,10 @@ describe('Link Preference', () => {
     resSpy.json.mockReturnThis()
     resSpy.send.mockReturnThis()
     mqttSpy = spyOn(MqttProvider, 'publishEvent')
-    setEthernetLinkPreferenceSpy = spyOn(device, 'setEthernetLinkPreference').mockResolvedValue({} as any)
+    // Mock with _detectedInstanceID to simulate auto-detection fallback
+    setEthernetLinkPreferenceSpy = spyOn(device, 'setEthernetLinkPreference').mockResolvedValue({
+      _detectedInstanceID: 'Intel(r) AMT Ethernet Port Settings 0'
+    } as any)
   })
 
   it('should set link preference to ME (1) with timeout', async () => {
@@ -85,6 +88,11 @@ describe('Link Preference', () => {
     req.body.linkPreference = 1
     req.body.timeout = 120
     req.query.instanceID = 'Intel(r) AMT Ethernet Port Settings 1'
+    
+    // Mock response with the custom instanceID
+    setEthernetLinkPreferenceSpy.mockResolvedValue({
+      _detectedInstanceID: 'Intel(r) AMT Ethernet Port Settings 1'
+    } as any)
 
     await setLinkPreference(req as any, resSpy)
 
