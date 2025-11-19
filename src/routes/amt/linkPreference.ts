@@ -18,11 +18,12 @@ export async function setLinkPreference(req: Request, res: Response): Promise<vo
     const deviceAction: DeviceAction = req.deviceAction as DeviceAction
 
     const linkPrefName = linkPreference === 1 ? 'ME' : 'HOST'
-    logger.debug(`Set Link Preference to ${linkPrefName} for ${guid} with timeout ${timeout}s, instanceID: ${instanceID ?? 'default'}`)
+    const instanceIDParam = instanceID?.trim() === '' ? undefined : instanceID
+    logger.debug(`Set Link Preference to ${linkPrefName} for ${guid} with timeout ${timeout}s, instanceID: ${instanceIDParam ?? 'auto-detect'}`)
     
-    const result = await deviceAction.setEthernetLinkPreference(linkPreference as 1 | 2, timeout, instanceID)
+    const result = await deviceAction.setEthernetLinkPreference(linkPreference as 1 | 2, timeout, instanceIDParam)
     
-    // Check if validation failed (non-WiFi port)
+    // Check if validation failed (non-WiFi port or no WiFi port found)
     if (result?.Body?.Fault != null) {
       const errorMsg = result.Body.Fault.Reason?.Text ?? 'Validation failed'
       logger.error(`Set Link Preference validation failed: ${errorMsg}`)
@@ -39,12 +40,15 @@ export async function setLinkPreference(req: Request, res: Response): Promise<vo
       return
     }
 
+    // Extract the detected instanceID (if auto-detected)
+    const detectedInstanceID = (result as any)._detectedInstanceID ?? instanceIDParam ?? 'Unknown'
+
     MqttProvider.publishEvent('success', ['AMT_LinkPreference'], `Link Preference set to ${linkPrefName}`)
     res.status(200).json({ 
       status: `Link Preference set to ${linkPrefName}`, 
       linkPreference,
       timeout, 
-      instanceID: instanceID ?? 'Intel(r) AMT Ethernet Port Settings 0' 
+      instanceID: detectedInstanceID
     }).end()
   } catch (error) {
     logger.error(`Exception during Set Link Preference: ${error}`)

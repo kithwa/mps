@@ -168,4 +168,44 @@ describe('Link Preference', () => {
     expect(resSpy.status).toHaveBeenCalledWith(500)
     expect(resSpy.json).toHaveBeenCalledWith(ErrorResponse(500, 'Failed to validate ethernet port'))
   })
+
+  it('should auto-detect WiFi port when instanceID not provided', async () => {
+    req.query.instanceID = undefined
+    const mockResponse = {
+      Body: { SetLinkPreference_OUTPUT: { ReturnValue: '0' } },
+      _detectedInstanceID: 'Intel(r) AMT Ethernet Port Settings 1'
+    }
+    setEthernetLinkPreferenceSpy.mockResolvedValue(mockResponse)
+
+    await setLinkPreference(req as any, resSpy)
+
+    expect(setEthernetLinkPreferenceSpy).toHaveBeenCalledWith(1, 300, undefined)
+    expect(resSpy.status).toHaveBeenCalledWith(200)
+    expect(resSpy.json).toHaveBeenCalledWith({
+      status: 'Link Preference set to ME',
+      linkPreference: 1,
+      timeout: 300,
+      instanceID: 'Intel(r) AMT Ethernet Port Settings 1'
+    })
+  })
+
+  it('should return 400 when no WiFi port found during auto-detection', async () => {
+    req.query.instanceID = undefined
+    const mockFaultResponse = {
+      Body: {
+        Fault: {
+          Code: { Value: 'NoWiFiPort' },
+          Reason: { Text: 'No WiFi port found on this device. SetLinkPreference requires a WiFi interface (PhysicalConnectionType=3).' }
+        }
+      }
+    }
+    setEthernetLinkPreferenceSpy.mockResolvedValue(mockFaultResponse)
+
+    await setLinkPreference(req as any, resSpy)
+
+    expect(resSpy.status).toHaveBeenCalledWith(400)
+    expect(resSpy.json).toHaveBeenCalledWith({ 
+      error: 'No WiFi port found on this device. SetLinkPreference requires a WiFi interface (PhysicalConnectionType=3).' 
+    })
+  })
 })
