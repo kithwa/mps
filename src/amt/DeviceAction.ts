@@ -689,6 +689,46 @@ export class DeviceAction {
   }
 
   /**
+   * Finds the first WiFi port by checking PhysicalConnectionType
+   * @returns InstanceID of the first WiFi port found, or null if none found
+   */
+  async findWiFiPort(): Promise<string | null> {
+    logger.silly('findWiFiPort: searching for WiFi port')
+    try {
+      const enumResult = await this.enumerateEthernetPortSettings()
+      if (enumResult?.Body?.PullResponse?.Items == null) {
+        logger.error('findWiFiPort: No ethernet port settings found')
+        return null
+      }
+
+      const settings: any = (enumResult.Body.PullResponse.Items as any).AMT_EthernetPortSettings
+      if (settings == null) {
+        logger.error('findWiFiPort: AMT_EthernetPortSettings not found in response')
+        return null
+      }
+
+      const ports = Array.isArray(settings) ? settings : [settings]
+
+      // Find the first port with PhysicalConnectionType = 3 (Wireless LAN)
+      const wifiPort = ports.find((port: any) => {
+        const connectionType = parseInt(port.PhysicalConnectionType, 10)
+        return connectionType === 3
+      })
+
+      if (wifiPort == null) {
+        logger.error('findWiFiPort: No WiFi port found')
+        return null
+      }
+
+      logger.silly(`findWiFiPort: Found WiFi port ${wifiPort.InstanceID}`)
+      return wifiPort.InstanceID
+    } catch (err) {
+      logger.error(`findWiFiPort error: ${(err as Error).message}`)
+      return null
+    }
+  }
+
+  /**
    * Validates if a given instance is a WiFi port by checking PhysicalConnectionType
    * @returns Object with isWiFi boolean and connectionType number, or null if not found
    */
@@ -734,19 +774,40 @@ export class DeviceAction {
   async setEthernetLinkPreference(
     linkPreference: AMT.Types.EthernetPortSettings.LinkPreference,
     timeoutSeconds: number,
-    instanceID: string = 'Intel(r) AMT Ethernet Port Settings 0'
+    instanceID?: string
   ): Promise<Common.Models.Envelope<any>> {
     logger.silly(`setEthernetLinkPreference ${messages.REQUEST}`)
 
+    // If no instanceID provided, auto-detect the WiFi port
+    let targetInstanceID = instanceID
+    if (targetInstanceID == null || targetInstanceID.trim() === '') {
+      logger.silly('setEthernetLinkPreference: No instanceID provided, auto-detecting WiFi port')
+      targetInstanceID = await this.findWiFiPort()
+      if (targetInstanceID == null) {
+        const errorMsg = 'No WiFi port found on this device. SetLinkPreference requires a WiFi interface (PhysicalConnectionType=3).'
+        logger.error(`setEthernetLinkPreference: ${errorMsg}`)
+        return {
+          Header: {},
+          Body: {
+            Fault: {
+              Code: { Value: 'NoWiFiPort' },
+              Reason: { Text: errorMsg }
+            }
+          }
+        } as any
+      }
+      logger.info(`setEthernetLinkPreference: Auto-detected WiFi port: ${targetInstanceID}`)
+    }
+
     // Validate that the target instance is a WiFi port
-    const validation = await this.validateWiFiPort(instanceID)
+    const validation = await this.validateWiFiPort(targetInstanceID)
     if (validation == null) {
       logger.error('setEthernetLinkPreference: Failed to validate port')
       return null
     }
 
     if (!validation.isWiFi) {
-      const errorMsg = `SetLinkPreference is only applicable for WiFi ports. InstanceID "${instanceID}" has PhysicalConnectionType=${validation.connectionType} (0=Integrated LAN, 1=Discrete LAN, 2=Thunderbolt). WiFi ports have type 3 (Wireless LAN).`
+      const errorMsg = `SetLinkPreference is only applicable for WiFi ports. InstanceID "${targetInstanceID}" has PhysicalConnectionType=${validation.connectionType} (0=Integrated LAN, 1=Discrete LAN, 2=Thunderbolt). WiFi ports have type 3 (Wireless LAN).`
       logger.error(`setEthernetLinkPreference: ${errorMsg}`)
       // Return an error envelope structure that handlers can recognize
       return {
@@ -760,9 +821,13 @@ export class DeviceAction {
       } as any
     }
 
-    const xmlRequestBody = this.amt.EthernetPortSettings.SetLinkPreference(linkPreference, timeoutSeconds, instanceID)
+    const xmlRequestBody = this.amt.EthernetPortSettings.SetLinkPreference(linkPreference, timeoutSeconds, targetInstanceID)
     const result = await this.ciraHandler.Get(this.ciraSocket, xmlRequestBody)
     logger.silly(`setEthernetLinkPreference ${messages.COMPLETE}`)
+    // Add the detected instanceID to the result for the handler to use
+    if (result?.Envelope != null) {
+      (result.Envelope as any)._detectedInstanceID = targetInstanceID
+    }
     return result.Envelope
   }
 
