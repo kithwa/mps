@@ -741,8 +741,12 @@ paths:
           description: 'Internal server error'
   /api/v1/amt/network/ethernetPortSettings/{guid}:
     get:
-      summary: Get Ethernet Port Settings
-      description: Retrieve Ethernet Port Settings including link preference, link policy, and other network configurations.
+      summary: Get Specific Ethernet Port Settings
+      description: |
+        Retrieve detailed Ethernet Port Settings for a specific port by InstanceID.
+        
+        Includes link preference, link policy, MAC address, and other network configurations.
+        Use `/enumerate/{guid}` first to discover available port InstanceIDs.
       tags:
         - AMT
       parameters:
@@ -755,11 +759,11 @@ paths:
             type: string
         - name: instanceID
           in: query
-          description: InstanceID of the Ethernet port (e.g., "Intel(r) AMT Ethernet Port Settings 0")
-          required: false
+          description: InstanceID of the Ethernet port (e.g., "Intel(r) AMT Ethernet Port Settings 0" for wired, "Intel(r) AMT Ethernet Port Settings 1" for WiFi)
+          required: true
           schema:
             type: string
-            default: Intel(r) AMT Ethernet Port Settings 0
+            example: Intel(r) AMT Ethernet Port Settings 1
       responses:
         200:
           description: 'Ethernet Port Settings retrieved successfully'
@@ -807,8 +811,17 @@ paths:
           description: 'Internal server error'
   /api/v1/amt/network/ethernetPortSettings/enumerate/{guid}:
     get:
-      summary: Enumerate all Ethernet Port Settings
-      description: Retrieve all Ethernet Port Settings instances (all network ports).
+      summary: Enumerate All Ethernet Port Settings
+      description: |
+        Retrieve all Ethernet Port Settings instances for all network ports (wired and wireless).
+        
+        **PhysicalConnectionType values**:
+        - 0 = Integrated LAN
+        - 1 = Discrete LAN  
+        - 2 = Thunderbolt
+        - 3 = Wireless LAN (WiFi)
+        
+        Use this endpoint to discover available ports and their types before setting link preferences.
       tags:
         - AMT
       parameters:
@@ -855,6 +868,16 @@ paths:
                                 MACAddress:
                                   type: string
                                   example: "00:11:22:33:44:55"
+                                PhysicalConnectionType:
+                                  type: integer
+                                  description: 0=Integrated LAN, 1=Discrete LAN, 2=Thunderbolt, 3=Wireless LAN
+                                  example: 3
+                                LinkIsUp:
+                                  type: boolean
+                                  example: true
+                                SharedMAC:
+                                  type: boolean
+                                  example: true
         404:
           description: 'Device not found'
           content:
@@ -865,8 +888,16 @@ paths:
           description: 'Internal server error'
   /api/v1/amt/network/linkPreference/{guid}:
     post:
-      summary: Set link preference with timeout
-      description: Set Ethernet Link Preference to ME (1) for a specified duration, or to HOST (2).
+      summary: Set WiFi Link Preference
+      description: |
+        Set Ethernet Link Preference for WiFi ports only. 
+        - **LinkPreference 1 (ME)**: Routes traffic through Management Engine for the specified timeout duration
+        - **LinkPreference 2 (HOST)**: Routes traffic through host OS (timeout should be 0)
+        
+        **WiFi Port Validation**: This API only works on WiFi ports (PhysicalConnectionType = 3). 
+        It will return a 400 error if attempting to set link preference on wired LAN ports (types 0, 1, or 2).
+        
+        **Auto-Detection**: If `instanceID` is not provided, the API will automatically detect and use the first available WiFi port.
       tags:
         - AMT
       parameters:
@@ -879,11 +910,14 @@ paths:
             type: string
         - name: instanceID
           in: query
-          description: InstanceID of the Ethernet port (e.g., "Intel(r) AMT Ethernet Port Settings 0")
+          description: |
+            InstanceID of the WiFi Ethernet port (e.g., "Intel(r) AMT Ethernet Port Settings 1").
+            If not provided, the API will automatically detect the WiFi port.
+            Must be a WiFi port (PhysicalConnectionType = 3).
           required: false
           schema:
             type: string
-            default: Intel(r) AMT Ethernet Port Settings 0
+            example: Intel(r) AMT Ethernet Port Settings 1
       requestBody:
         description: Link preference and timeout settings
         required: true
@@ -923,9 +957,18 @@ paths:
                     example: 300
                   instanceID:
                     type: string
-                    example: Intel(r) AMT Ethernet Port Settings 0
+                    description: The WiFi port InstanceID that was used (auto-detected or specified)
+                    example: Intel(r) AMT Ethernet Port Settings 1
         400:
-          description: 'Invalid parameters'
+          description: 'Validation error - port is not a WiFi port or no WiFi port found'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "SetLinkPreference is only applicable for WiFi ports. InstanceID \"Intel(r) AMT Ethernet Port Settings 0\" has PhysicalConnectionType=0 (0=Integrated LAN, 1=Discrete LAN, 2=Thunderbolt). WiFi ports have type 3 (Wireless LAN)."
         404:
           description: 'Device not found'
           content:
