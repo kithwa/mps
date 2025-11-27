@@ -28,7 +28,7 @@ export async function send(req: Request, res: Response): Promise<void> {
         res.status(200).json(result)
       } else {
         // Map AMT return value to appropriate HTTP status code
-        const httpStatus = mapAMTReturnValueToHttpStatus(result.Body.ReturnValue, 'send')
+        const httpStatus = mapAMTReturnValueToHttpStatus(result.Body.ReturnValueStr)
         const errorDetail = getDetailedErrorMessage(result.Body.ReturnValue, result.Body.ReturnValueStr, 'send')
         
         logger.error(`${messages.USER_CONSENT_SENT_FAILED} for guid : ${guid}. ReturnValue: ${result.Body.ReturnValue} (${result.Body.ReturnValueStr})`)
