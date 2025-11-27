@@ -27,7 +27,7 @@ export async function request(req: Request, res: Response): Promise<void> {
         res.status(200).json(result)
       } else {
         // Map AMT return value to appropriate HTTP status code
-        const httpStatus = mapAMTReturnValueToHttpStatus(result.Body.ReturnValue, 'request')
+        const httpStatus = mapAMTReturnValueToHttpStatus(result.Body.ReturnValueStr)
         const errorDetail = getDetailedErrorMessage(result.Body.ReturnValue, result.Body.ReturnValueStr, 'request')
         
         logger.error(`${messages.USER_CONSENT_REQUEST_FAILED} for guid : ${guid}. ReturnValue: ${result.Body.ReturnValue} (${result.Body.ReturnValueStr})`)
