@@ -739,6 +739,245 @@ paths:
                 $ref: '#/components/schemas/DisconnectErrorResponse'
         500:
           description: 'Internal server error'
+  /api/v1/amt/network/ethernetPortSettings/{guid}:
+    get:
+      summary: Get Specific Ethernet Port Settings
+      description: |
+        Retrieve detailed Ethernet Port Settings for a specific port by InstanceID.
+        
+        Includes link preference, link policy, MAC address, and other network configurations.
+        Use `/enumerate/{guid}` first to discover available port InstanceIDs.
+      tags:
+        - AMT
+      parameters:
+        - name: guid
+          in: path
+          description: GUID of device
+          example: 123e4567-e89b-12d3-a456-426614174000
+          required: true
+          schema:
+            type: string
+        - name: instanceID
+          in: query
+          description: InstanceID of the Ethernet port (e.g., "Intel(r) AMT Ethernet Port Settings 0" for wired, "Intel(r) AMT Ethernet Port Settings 1" for WiFi)
+          required: true
+          schema:
+            type: string
+            example: Intel(r) AMT Ethernet Port Settings 1
+      responses:
+        200:
+          description: 'Ethernet Port Settings retrieved successfully'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  InstanceID:
+                    type: string
+                    example: Intel(r) AMT Ethernet Port Settings 0
+                  ElementName:
+                    type: string
+                    example: Intel(r) AMT Ethernet Port Settings
+                  LinkPreference:
+                    type: integer
+                    description: 1 = ME, 2 = HOST
+                    example: 2
+                  LinkControl:
+                    type: integer
+                    description: 1 = ME, 2 = HOST
+                    example: 2
+                  LinkPolicy:
+                    type: array
+                    items:
+                      type: integer
+                    description: Array of link policy values
+                    example: [1, 14, 16]
+                  LinkProtection:
+                    type: integer
+                    example: 1
+                  SharedMAC:
+                    type: boolean
+                    example: true
+                  MACAddress:
+                    type: string
+                    example: "00:11:22:33:44:55"
+        404:
+          description: 'Device not found'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisconnectErrorResponse'
+        500:
+          description: 'Internal server error'
+  /api/v1/amt/network/ethernetPortSettings/enumerate/{guid}:
+    get:
+      summary: Enumerate All Ethernet Port Settings
+      description: |
+        Retrieve all Ethernet Port Settings instances for all network ports (wired and wireless).
+        
+        **PhysicalConnectionType values**:
+        - 0 = Integrated LAN
+        - 1 = Discrete LAN  
+        - 2 = Thunderbolt
+        - 3 = Wireless LAN (WiFi)
+        
+        Use this endpoint to discover available ports and their types before setting link preferences.
+      tags:
+        - AMT
+      parameters:
+        - name: guid
+          in: path
+          description: GUID of device
+          example: 123e4567-e89b-12d3-a456-426614174000
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: 'All Ethernet Port Settings retrieved successfully'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Body:
+                    type: object
+                    properties:
+                      PullResponse:
+                        type: object
+                        properties:
+                          Items:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                InstanceID:
+                                  type: string
+                                  example: Intel(r) AMT Ethernet Port Settings 0
+                                ElementName:
+                                  type: string
+                                  example: Intel(r) AMT Ethernet Port Settings
+                                LinkPreference:
+                                  type: integer
+                                  description: 1 = ME, 2 = HOST
+                                  example: 2
+                                LinkControl:
+                                  type: integer
+                                  description: 1 = ME, 2 = HOST
+                                  example: 2
+                                MACAddress:
+                                  type: string
+                                  example: "00:11:22:33:44:55"
+                                PhysicalConnectionType:
+                                  type: integer
+                                  description: 0=Integrated LAN, 1=Discrete LAN, 2=Thunderbolt, 3=Wireless LAN
+                                  example: 3
+                                LinkIsUp:
+                                  type: boolean
+                                  example: true
+                                SharedMAC:
+                                  type: boolean
+                                  example: true
+        404:
+          description: 'Device not found'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisconnectErrorResponse'
+        500:
+          description: 'Internal server error'
+  /api/v1/amt/network/linkPreference/{guid}:
+    post:
+      summary: Set WiFi Link Preference
+      description: |
+        Set Ethernet Link Preference for WiFi ports only. 
+        - **LinkPreference 1 (ME)**: Routes traffic through Management Engine for the specified timeout duration
+        - **LinkPreference 2 (HOST)**: Routes traffic through host OS (timeout should be 0)
+        
+        **WiFi Port Validation**: This API only works on WiFi ports (PhysicalConnectionType = 3). 
+        It will return a 400 error if attempting to set link preference on wired LAN ports (types 0, 1, or 2).
+        
+        **Auto-Detection**: If `instanceID` is not provided, the API will automatically detect and use the first available WiFi port.
+      tags:
+        - AMT
+      parameters:
+        - name: guid
+          in: path
+          description: GUID of device
+          example: 123e4567-e89b-12d3-a456-426614174000
+          required: true
+          schema:
+            type: string
+        - name: instanceID
+          in: query
+          description: |
+            InstanceID of the WiFi Ethernet port (e.g., "Intel(r) AMT Ethernet Port Settings 1").
+            If not provided, the API will automatically detect the WiFi port.
+            Must be a WiFi port (PhysicalConnectionType = 3).
+          required: false
+          schema:
+            type: string
+            example: Intel(r) AMT Ethernet Port Settings 1
+      requestBody:
+        description: Link preference and timeout settings
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                linkPreference:
+                  type: integer
+                  description: Link preference - 1 = ME, 2 = HOST
+                  enum: [1, 2]
+                  example: 1
+                timeout:
+                  type: integer
+                  description: Timeout in seconds
+                  example: 300
+              required:
+                - linkPreference
+                - timeout
+      responses:
+        200:
+          description: 'Link preference set successfully'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: Link Preference set to ME
+                  linkPreference:
+                    type: integer
+                    example: 1
+                  timeout:
+                    type: integer
+                    example: 300
+                  instanceID:
+                    type: string
+                    description: The WiFi port InstanceID that was used (auto-detected or specified)
+                    example: Intel(r) AMT Ethernet Port Settings 1
+        400:
+          description: 'Validation error - port is not a WiFi port or no WiFi port found'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "SetLinkPreference is only applicable for WiFi ports. InstanceID \"Intel(r) AMT Ethernet Port Settings 0\" has PhysicalConnectionType=0 (0=Integrated LAN, 1=Discrete LAN, 2=Thunderbolt). WiFi ports have type 3 (Wireless LAN)."
+        404:
+          description: 'Device not found'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisconnectErrorResponse'
+        500:
+          description: 'Internal server error'
+  /api/v1/amt/screen/{guid}:
     put:
       summary: Put the changed settings for KVM in AMT
       description: Modify screen settings for KVM in AMT device
